@@ -14,7 +14,7 @@ current_patient = {
 
 # --- Initialize Gemini API ---
 def init_gemini():
-    api_key = os.getenv("GEMINI_API_KEY") or "AIzaSyC-hZwFe1QlGYzesWSqdX7gxLbrrgpEvNE"
+    api_key = os.getenv("GEMINI_API_KEY") or "your-gemini-api-key-here"
     genai.configure(api_key=api_key)
     return genai
 
@@ -23,9 +23,9 @@ def search_medications(condition):
     try:
         conn = mysql.connector.connect(
             host='localhost',
-            user='root',
-            password='Lakshay@133',
-            database='ai_doctor'
+            user='username-here',
+            password='SQL-PASSWORD-HERE',
+            database='database-name'
         )
         cursor = conn.cursor()
         query = "SELECT name, description, dosage, side_effects FROM medications WHERE `condition` LIKE %s"

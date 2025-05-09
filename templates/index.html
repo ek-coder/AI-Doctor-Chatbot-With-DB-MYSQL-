@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Doctor | Virtual Health Assistant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <i class="fas fa-heartbeat pulse"></i>
+        <h1>AI Doctor</h1>
+      </div>
+      <p class="tagline">Your personal health assistant powered by AI</p>
+    </header>
+
+    <div class="chat-container">
+      <div id="chat-box" class="chat-box">
+        <div class="chat-entry">
+          <div class="message ai">
+            <div class="avatar">
+              <i class="fas fa-robot"></i>
+            </div>
+            <div class="content">
+              <span class="sender">AI Doctor</span>
+              <p>Hello! I'm your AI medical assistant. Please describe your symptoms, and I'll try to help you. Remember, I'm not a replacement for professional medical advice.</p>
+              <p>Before we start, Please tell your good Name.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <textarea id="user-input" placeholder="Describe your symptoms or health concerns..." rows="2"></textarea>
+        <button id="ask-button">
+          <i class="fas fa-paper-plane"></i>
+          <span>Send</span>
+        </button>
+      </div>
+    </div>
+
+    <footer>
+      <p><i class="fas fa-shield-alt"></i> For informational purposes only. Always consult with a healthcare professional.</p>
+    </footer>
+  </div>
+
+  <script>
+    const btn = document.getElementById("ask-button");
+    const input = document.getElementById("user-input");
+    const chatBox = document.getElementById("chat-box");
+
+    // Auto-expand textarea
+    input.addEventListener("input", function() {
+      this.style.height = "auto";
+      this.style.height = (this.scrollHeight) + "px";
+      if (this.scrollHeight > 150) {
+        this.style.height = "150px";
+      }
+    });
+
+    // Send message on Enter key (but allow Shift+Enter for new line)
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        btn.click();
+      }
+    });
+
+    function addMessage(content, sender) {
+      const message = document.createElement("div");
+      message.className = `message ${sender}`;
+      
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      
+      const iconElement = document.createElement("i");
+      if (sender === "user") {
+        iconElement.className = "fas fa-user";
+      } else {
+        iconElement.className = "fas fa-robot";
+      }
+      
+      avatar.appendChild(iconElement);
+      message.appendChild(avatar);
+      
+      const contentDiv = document.createElement("div");
+      contentDiv.className = "content";
+      
+      const senderName = document.createElement("span");
+      senderName.className = "sender";
+      senderName.textContent = sender === "user" ? "You" : "AI Doctor";
+      contentDiv.appendChild(senderName);
+      
+      const textContent = document.createElement("p");
+      textContent.innerHTML = content;
+      contentDiv.appendChild(textContent);
+      
+      message.appendChild(contentDiv);
+      
+      const wrapper = document.createElement("div");
+      wrapper.className = "chat-entry";
+      wrapper.appendChild(message);
+      
+      chatBox.appendChild(wrapper);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    btn.addEventListener("click", async () => {
+      const query = input.value.trim();
+      if (!query) return;
+      
+      input.value = "";
+      input.style.height = "auto"; // Reset height
+      
+      addMessage(query, "user");
+      
+      const thinkingMessage = document.createElement("div");
+      thinkingMessage.className = "message ai thinking";
+      
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      const iconElement = document.createElement("i");
+      iconElement.className = "fas fa-robot";
+      avatar.appendChild(iconElement);
+      thinkingMessage.appendChild(avatar);
+      
+      const contentDiv = document.createElement("div");
+      contentDiv.className = "content";
+      
+      const senderName = document.createElement("span");
+      senderName.className = "sender";
+      senderName.textContent = "AI Doctor";
+      contentDiv.appendChild(senderName);
+      
+      const dots = document.createElement("div");
+      dots.className = "typing-indicator";
+      dots.innerHTML = '<span></span><span></span><span></span>';
+      contentDiv.appendChild(dots);
+      
+      thinkingMessage.appendChild(contentDiv);
+      
+      const wrapper = document.createElement("div");
+      wrapper.className = "chat-entry thinking-wrapper";
+      wrapper.appendChild(thinkingMessage);
+      
+      chatBox.appendChild(wrapper);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      try {
+        const res = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query })
+        });
+
+        const { response } = await res.json();
+        chatBox.querySelector(".thinking-wrapper").remove();
+        addMessage(response, "ai");
+      } catch (err) {
+        chatBox.querySelector(".thinking-wrapper").remove();
+        addMessage("❌ I'm having trouble connecting to the server. Please try again later.", "ai");
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
